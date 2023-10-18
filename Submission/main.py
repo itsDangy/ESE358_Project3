@@ -1,25 +1,21 @@
 import numpy as np
 import cv2
 
-def gaussian(x, y, sigma):
-    return (1.0 / (2 * np.pi * sigma ** 2)) * np.exp(-((x ** 2 + y ** 2) / (2 * sigma ** 2)))
+def gaussian(x, sigma):
+     return (1.0 / (np.sqrt(2 * np.pi) * sigma)) * np.exp(-(x ** 2) / (2 * sigma ** 2))
 
 def gaussian_filter(size, sigma):
-    # Ensure the filter size is odd for a centered filter
-    if size % 2 == 0:
-        size += 1
-
     half_size = size // 2
-    filter = np.zeros((size, size))
+    kernel = np.zeros(size)
 
-    for x in range(-half_size, half_size + 1):
-        for y in range(-half_size, half_size + 1):
-            filter[x + half_size, y + half_size] = gaussian(x, y, sigma)
+    for i in range(size):
+        x = i - half_size
+        kernel[i] = gaussian(x, sigma)
 
-    # Normalize the filter
-    filter /= np.sum(filter)
+    # Normalize the kernel
+    kernel /= np.sum(kernel)
 
-    return filter
+    return kernel
 
 #create filter based on specified file or generate a gaussian filter
 def create_filter(M, sigma=None, filter_file=None):
@@ -36,30 +32,18 @@ def create_filter(M, sigma=None, filter_file=None):
     return g
 
 def custom_filter2D(image, kernel):
-    # Get the dimensions of the image and kernel
-    image_height, image_width = image.shape
-    kernel_height, kernel_width = kernel.shape
+    height, width = image.shape
 
-    # Create an empty result image with the same dimensions as the input image
-    result = np.zeros_like(image)
+    # Apply the filter horizontally
+    filtered_image = np.zeros_like(image)
+    for i in range(height):
+        filtered_image[i, :] = np.convolve(image[i, :], kernel, mode='same')
 
-    # Compute the padding needed for valid convolution
-    pad_height = kernel_height // 2
-    pad_width = kernel_width // 2
+    # Apply the filter vertically
+    for j in range(width):
+        filtered_image[:, j] = np.convolve(filtered_image[:, j], kernel, mode='same')
 
-    # Pad the input image with zeros
-    padded_image = np.pad(image, ((pad_height, pad_height), (pad_width, pad_width)), mode='constant')
-
-    # Iterate over each pixel in the input image
-    for y in range(image_height):
-        for x in range(image_width):
-            # Extract the region of interest (ROI) from the padded image
-            roi = padded_image[y:y + kernel_height, x:x + kernel_width]
-
-            # Perform element-wise multiplication and sum to apply the kernel
-            result[y, x] = np.sum(roi * kernel)
-
-    return result
+    return filtered_image
 
 def convolve_image(image, g):
     h = custom_filter2D(image, g)
