@@ -33,15 +33,19 @@ def create_filter(M, sigma=None, filter_file=None):
 
 def custom_filter2D(image, kernel):
     height, width = image.shape
+    kernel_size = len(kernel)
+    half_kernel_size = kernel_size // 2
 
-    # Apply the filter horizontally
     filtered_image = np.zeros_like(image)
-    for i in range(height):
-        filtered_image[i, :] = np.convolve(image[i, :], kernel, mode='same')
 
-    # Apply the filter vertically
-    for j in range(width):
-        filtered_image[:, j] = np.convolve(filtered_image[:, j], kernel, mode='same')
+    for i in range(height):
+        for j in range(width):
+            pixel_value = 0.0
+            for m in range(-half_kernel_size, half_kernel_size + 1):
+                for n in range(-half_kernel_size, half_kernel_size + 1):
+                    if (i + m >= 0 and i + m < height) and (j + n >= 0 and j + n < width):
+                        pixel_value += image[i + m, j + n] * kernel[m + half_kernel_size] * kernel[n + half_kernel_size]
+            filtered_image[i, j] = pixel_value
 
     return filtered_image
 
