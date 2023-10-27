@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 
 #read image
 image = plt.imread("pic1grey300.jpg",0)
-#image = plt.imread("pic1grey300.jpg",0)
-# plt.imshow(image,cmap='gray')
-# plt.title("Original Image")
-# plt.show()
+# image = plt.imread("pic1grey300.jpg",0)
+plt.imshow(image,cmap='gray')
+plt.title("Original Image")
+plt.show()
 M = 9
 N = image.shape[0]
 
@@ -59,10 +59,10 @@ g = create_filter(M, sigma)
 
 h = convolve_2d(image, g)
 
-#display image for part 1
-# plt.imshow(h,cmap='gray')
-# plt.title("Convolved Image")
-# plt.show()
+# display image for part 1
+plt.imshow(h,cmap='gray')
+plt.title("Convolved Image")
+plt.show()
 
 ###########
 # PART 2
@@ -113,9 +113,9 @@ for i in range(gradientMagnitude.shape[0]):
     for j in range(gradientMagnitude.shape[1]):
         Canny[i,j] = 1.0 if gradientMagnitude[i,j] > threshold else 0.0
 
-# plt.imshow(gradientMagnitude,cmap='gray')
-# plt.title("Canny Edges Image")
-# plt.show()
+plt.imshow(gradientMagnitude,cmap='gray')
+plt.title("Canny Edges Image")
+plt.show()
 
 ###########
 # PART 3a
@@ -173,33 +173,33 @@ def nonmaxima_suppresion(R):
 corners = nonmaxima_suppresion(R)
 
 color = cv2.cvtColor(image,cv2.COLOR_GRAY2BGR)
-for i in range(N):
-    for j in range(N):
+for i in range(4,N-5):
+    for j in range(4,N-5):
         if corners[i,j] == 0:
             cv2.circle(color, (j,i), radius=1, color=(0, 255, 0))
-# plt.imshow(color)
-# plt.title("Circled Corners")
-# plt.show()
+plt.imshow(color)
+plt.title("Circled Corners")
+plt.show()
 
 ###########
 # PART 3b
 ###########
 
-hist = np.zeros(8)
-gradient_vector = np.arctan2(Ix,Iy)+np.pi
-gradient_vector =  gradient_vector * 180 / np.pi
-for i in range(N):
-    for j in range(N):
+hist = np.array([0,0,0,0,0,0,0,0],dtype=float)
+itr = 0
+gradient_vector = np.arctan2(Ix,Iy)
+gradient_vector = gradient_vector * 180 / np.pi
+for i in range(5,N-6):
+    for j in range(5,N-6):
         if corners[i,j] == 0:
-            for k in range(i-3,i+4):
-                for l in range(j-3,j+4):
+            for k in range(i-5,i+6):
+                for l in range(j-5,j+6):
                     hist[round(gradient_vector[k,l]/45)] += gradientMagnitude[k,l]
-        maxval = 0
-        for o in range(len(hist)):
-            if hist[o] > maxval:
-                maxval = hist[o]
-                itr = o
-        histn = np.roll(hist,itr)
-        print("pixel at (" + i +","+j+") has histogram of " + histn)
-                
-
+            maxval = 0
+            for o in range(len(hist)):
+                if hist[o] > maxval:
+                    maxval = hist[o]
+                    itr = o
+            histn = np.roll(hist,itr)
+            print("pixel at (" + str(i) +","+str(j)+") has histogram of ")
+            print(histn)
