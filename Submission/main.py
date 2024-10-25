@@ -147,7 +147,7 @@ matrix[:, :, 0, 1] = Cprime
 matrix[:, :, 1, 0] = Cprime
 matrix[:, :, 1, 1] = Bprime
 
-def compute_cornerness(matrix,alpha):
+def cornerness(matrix,alpha):
     R = np.zeros((N,N))
     for i in range(N):
         for j in range(N):
@@ -159,7 +159,7 @@ def compute_cornerness(matrix,alpha):
         for j in range(N):
             R[i,j] = 1.0 if R[i,j] > threshold else 0.0
     return R
-R = compute_cornerness(matrix,0.001)
+R = cornerness(matrix,0.001)
 
 def nonmaxima_suppresion(R):
     row,col = R.shape
@@ -203,3 +203,89 @@ for i in range(5,N-6):
             histn = np.roll(hist,itr)
             print("pixel at (" + str(i) +","+str(j)+") has histogram of ")
             print(histn)
+
+#########
+# PART 4
+#########
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load the images
+image1 = cv2.imread("pic1grey300.jpg", cv2.IMREAD_GRAYSCALE)
+image2 = cv2.imread("pic2grey300.jpg", cv2.IMREAD_GRAYSCALE)
+
+# Arrays to store selected points for both images
+points1 = []
+points2 = []
+
+# Function to capture points in Image 1
+def select_points_image1(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        points1.append((x, y))
+        print(f"Image 1 - Point: {(x, y)}")
+
+# Function to capture points in Image 2
+def select_points_image2(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        points2.append((x, y))
+        print(f"Image 2 - Point: {(x, y)}")
+
+# Display image 1 and select points
+cv2.namedWindow("Image 1")
+cv2.setMouseCallback("Image 1", select_points_image1)
+cv2.imshow("Image 1", image1)
+print("Click on points in Image 1 and press any key when done.")
+cv2.waitKey(0)  # Press any key after selecting points
+cv2.destroyWindow("Image 1")
+
+# Display image 2 and select points
+cv2.namedWindow("Image 2")
+cv2.setMouseCallback("Image 2", select_points_image2)
+cv2.imshow("Image 2", image2)
+print("Click on points in Image 2 and press any key when done.")
+cv2.waitKey(0)  # Press any key after selecting points
+cv2.destroyWindow("Image 2")
+
+# Ensure we have at least 15 points in each image
+if len(points1) >= 15 and len(points2) >= 15:
+    # Convert points to NumPy arrays
+    pts1 = np.float32(points1[:15])  # Points from Image 1 (reference image)
+    pts2 = np.float32(points2[:15])  # Points from Image 2 (image to be transformed)
+
+    # Estimate the affine transformation matrix to map Image 2 onto Image 1
+    affine_matrix, inliers = cv2.estimateAffine2D(pts2, pts1)
+
+    # Print the affine matrix
+    print("Affine Transformation Matrix:")
+    print(affine_matrix)
+
+    # Separate the transformation matrix into rotation, scaling, and translation components
+    rotation_scaling_matrix = affine_matrix[:, :2]
+    translation_vector = affine_matrix[:, 2]
+
+    print("\nRotation and Scaling Matrix:")
+    print(rotation_scaling_matrix)
+
+    print("\nTranslation Vector:")
+    print(translation_vector)
+
+    # Apply the transformation to Image 2 for visualization
+    rows, cols = image1.shape  # Use dimensions of Image 1 (reference)
+    transformed_image2 = cv2.warpAffine(image2, affine_matrix, (cols, rows))
+
+    # Plot the original Image 2 and the transformed Image 2 side by side
+    plt.subplot(1, 2, 1)
+    plt.imshow(image2, cmap='gray')
+    plt.title("Original Image 2")
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(transformed_image2, cmap='gray')
+    plt.title("Transformed Image 2 to Match Image 1")
+
+    plt.show()
+
+else:
+    print("Please select at least 15 points in both images.")
+
